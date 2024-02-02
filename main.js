@@ -43,6 +43,20 @@ class HeadSegment extends Segment {
   }
 }
 
+class Food {
+  constructor(INITIAL_POSITION = [8, 5]) {
+    this.position = INITIAL_POSITION;
+  }
+
+  getPosition() {
+    return this.position;
+  }
+
+  setPosition(value) {
+    this.position = value;
+  }
+}
+
 class Snake {
   constructor() {
     this.snake;
