@@ -8,7 +8,7 @@ class Segment {
     return this.position;
   }
 
-  setPostition(value) {
+  setPosition(value) {
     this.position = value;
   }
 
@@ -16,7 +16,7 @@ class Segment {
     return this.position;
   }
 
-  setNextPostition(value) {
+  setNextPosition(value) {
     this.position = value;
   }
 }
@@ -24,7 +24,7 @@ class Segment {
 class HeadSegment extends Segment {
   constructor(position, nextPosition, velocity) {
     super(position, nextPosition);
-    this.velocity = velocity;
+    this.velocity = velocity; // can be [1,0], [-1,0], [0, 1], [0, -1]
   }
 
   getVelocity() {
@@ -34,10 +34,41 @@ class HeadSegment extends Segment {
   setVelocity(value) {
     this.velocity = value;
   }
+
+  computeNextPosition() {
+    return [
+      this.nextPosition[0] + this.velocity[0],
+      this.nextPosition[1] + this.velocity[1],
+    ];
+  }
+}
+
+class Snake {
+  constructor() {
+    this.snake;
+  }
+
+  buildSnake(startSize, startPosition) {
+    this.snake = [new HeadSegment(startPosition)];
+    while (snake.length < startSize) {
+      startPosition[0] = startPosition[0] - 1;
+      this.snake.push(new Segment(startPosition.slice()));
+    }
+  }
+
+  updatePositions() {
+    const newHeading = this.snake[0].computeNextPosition();
+    this.snake[0].setPosition(this.snake[0].getNextPosition());
+    this.snake[0].setNextPosition(newHeading);
+    for (let i = this.snake.length - 1; i > 1; i--) {
+      this.snake[i].setPosition(this.snake[i].getNextPosition());
+      this.snake[i].setNextPosition(this.snake[i - 1].getPosition());
+    }
+  }
 }
 
 class Board {
-  constructor(COLUMN, ROW) {
+  constructor(COLUMN = 10, ROW = 10) {
     this.availableCells = this.buildBoard(COLUMN, ROW);
     this.unavailableCells = new Set();
   }
@@ -70,22 +101,19 @@ class Board {
 }
 
 class GameController {
+  constructor() {
+    this.board = new Board();
+    this.snake = new Snake();
+  }
+
   reset() {
-    const START_SIZE = 3;
-    const START_POSITION = [5, 5];
+    START_SIZE = 3;
+    START_POSITION = [5, 5];
 
     const snake = this.buildSnake(START_SIZE, START_POSITION);
   }
 
-  buildSnake(startSize, startPosition) {
-    const snake = [new HeadSegment(startPosition)];
-    while (snake.length < startSize) {
-      startPosition[0] = startPosition[0] - 1;
-      snake.push(new Segment(startPosition.slice()));
-    }
-
-    return snake;
-  }
+  isLose() {}
 }
 
 const game = new GameController();
