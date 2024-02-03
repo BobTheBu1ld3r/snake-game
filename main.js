@@ -13,18 +13,19 @@ class Segment {
   }
 
   getNextPosition() {
-    return this.position;
+    return this.nextPosition;
   }
 
   setNextPosition(value) {
-    this.position = value;
+    this.nextPosition = value;
   }
 }
 
 class HeadSegment extends Segment {
-  constructor(position, nextPosition, velocity) {
-    super(position, nextPosition);
-    this.velocity = velocity; // can be [1,0], [-1,0], [0, 1], [0, -1]
+  constructor(position, velocity) {
+    super(position);
+    this.velocity = velocity; // can be [0,0], [1,0], [-1,0], [0, 1], [0, -1]
+    this.nextPosition = this.computeNextPosition();
   }
 
   getVelocity() {
@@ -37,15 +38,15 @@ class HeadSegment extends Segment {
 
   computeNextPosition() {
     return [
-      this.nextPosition[0] + this.velocity[0],
-      this.nextPosition[1] + this.velocity[1],
+      this.position[0] + this.velocity[0],
+      this.position[1] + this.velocity[1],
     ];
   }
 }
 
 class Food {
-  constructor(INITIAL_POSITION = [8, 5]) {
-    this.position = INITIAL_POSITION;
+  constructor() {
+    this.position;
   }
 
   getPosition() {
@@ -62,22 +63,35 @@ class Snake {
     this.snake;
   }
 
-  buildSnake(startSize, startPosition) {
-    this.snake = [new HeadSegment(startPosition)];
-    while (snake.length < startSize) {
-      startPosition[0] = startPosition[0] - 1;
-      this.snake.push(new Segment(startPosition.slice()));
+  buildSnake(startSize, startPosition, startVelocity) {
+    this.snake = [new HeadSegment(startPosition, startVelocity)];
+    for (let i = 1; i < startSize; i++) {
+      this.snake.push(
+        new Segment(
+          [startPosition[0] - i, startPosition[1]],
+          this.snake[i - 1].getPosition()
+        )
+      );
     }
   }
 
   updatePositions() {
-    const newHeading = this.snake[0].computeNextPosition();
-    this.snake[0].setPosition(this.snake[0].getNextPosition());
-    this.snake[0].setNextPosition(newHeading);
-    for (let i = this.snake.length - 1; i > 1; i--) {
-      this.snake[i].setPosition(this.snake[i].getNextPosition());
-      this.snake[i].setNextPosition(this.snake[i - 1].getPosition());
+    this.snake[0].setPosition(this.snake[0].getNextPosition().slice());
+    this.snake[0].setNextPosition(this.snake[0].computeNextPosition().slice());
+    for (let i = 0; i < this.snake.length - 1; i++) {
+      this.snake[i + 1].setPosition(
+        this.snake[i + 1].getNextPosition().slice()
+      );
+      this.snake[i + 1].setNextPosition(this.snake[i].getPosition().slice());
     }
+  }
+
+  getPositions() {
+    return this.snake.map((e) => e.getPosition());
+  }
+
+  getHeadNextPosition() {
+    return this.snake[0].nextPosition;
   }
 }
 
@@ -118,18 +132,39 @@ class GameController {
   constructor() {
     this.board = new Board();
     this.snake = new Snake();
+    this.food = new Food();
   }
 
   reset() {
-    START_SIZE = 3;
-    START_POSITION = [5, 5];
+    const START_SIZE = 3;
+    const START_POSITION = [5, 5];
+    const START_VELOCITY = [1, 0];
 
-    const snake = this.buildSnake(START_SIZE, START_POSITION);
+    const FOOD_START_POSITION = [8, 5];
+
+    this.snake.buildSnake(START_SIZE, START_POSITION, START_VELOCITY);
+    this.food.setPosition(FOOD_START_POSITION);
   }
 
-  isLose() {}
+  update() {
+    const loseState = 0;
+
+    this.snake.updatePositions();
+    if (this.isLose()) return loseState;
+  }
+
+  isLose() {
+    const availableCells = new Set(this.board.buildBoard(10, 10));
+    const unavailableCells = this.snake.getPositions();
+    unavailableCells
+      .map((e) => e.join(","))
+      .forEach((e) => availableCells.delete(e));
+
+    if (unavailableCells.includes(this.snake.getHeadNextPosition()))
+      return true;
+    else return false;
+  }
 }
 
 const game = new GameController();
 game.reset();
-debugger;
